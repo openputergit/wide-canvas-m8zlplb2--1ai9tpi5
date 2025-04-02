@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Requirements Writer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --neon-blue: rgba(59, 130, 246, 0.8);
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .glassmorphism {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        .processing-animation {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.6; transform: scale(0.98); }
+        }
+        .pulse-animate {
+            animation: pulse 2s infinite;
+        }
+        .hide {
+            display: none;
+        }
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .sidebar-open {
+                transform: translateX(0);
+            }
+            .mobile-sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 50;
+                height: 100%;
+            }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.7);
+        }
+        /* Glassmorphic inputs */
+        input, textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        input:focus, textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="flex flex-col md:flex-row min-h-screen relative">
+        <!-- Mobile Menu Button -->
+        <button id="menuToggle" class="md:hidden fixed top-4 left-4 z-50 bg-blue-600 p-2 rounded-full neon-glow">
+            <i class="bi bi-list text-xl"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <nav id="sidebar" class="mobile-sidebar md:relative glassmorphism w-64 p-6 space-y-8 md:h-auto h-full">
+            <div class="flex items-center space-x-2 text-2xl font-bold mb-10">
+                <i class="bi bi-braces text-blue-400"></i>
+                <span>RequirementsAI</span>
+            </div>
+            <div class="space-y-4">
+                <a href="#" class="flex items-center space-x-3 p-2 rounded hover:bg-blue-500/20 transition-colors">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 bg-blue-500/20 rounded">
+                    <i class="bi bi-upload"></i>
+                    <span>Upload</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded hover:bg-blue-500/20 transition-colors">
+                    <i class="bi bi-clock-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded hover:bg-blue-500/20 transition-colors">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="pt-6 mt-6 border-t border-white/10">
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded hover:bg-blue-500/20 transition-colors">
+                        <i class="bi bi-question-circle"></i>
+                        <span>Help & Support</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded hover:bg-blue-500/20 transition-colors">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 pt-16 md:pt-8">
+            <h1 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="bi bi-file-earmark-text mr-2 text-blue-400"></i>
+                Requirements Extraction
+            </h1>
+            
+            <!-- Upload Section -->
+            <div class="glassmorphism p-6 md:p-8 mb-8">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="bi bi-cloud-upload mr-2 text-blue-400"></i>
+                    Upload Documents
+                </h2>
+                <div id="uploadArea" class="upload-area p-6 md:p-8 text-center rounded-lg cursor-pointer">
+                    <i class="bi bi-cloud-upload text-4xl mb-4 text-blue-400 pulse-animate"></i>
+                    <p>Drag and drop files here or click to upload</p>
+                    <p class="text-sm text-gray-400 mt-2">Supported formats: PDF, DOC, DOCX, XLS, XLSX</p>
+                    <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.doc,.docx,.xls,.xlsx">
+                </div>
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium mb-4 flex items-center">
+                        <i class="bi bi-pencil-square mr-2 text-blue-400"></i>
+                        Manual Input
+                    </h3>
+                    <textarea id="manualInput" class="w-full h-32 bg-transparent glassmorphism p-4 rounded-lg" placeholder="Type or paste your requirements here..."></textarea>
+                </div>
+                <button id="processBtn" class="mt-4 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg neon-glow transition-all flex items-center">
+                    <i class="bi bi-gear-fill mr-2"></i>
+                    Process Requirements
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="glassmorphism p-6 md:p-8 hide">
+                <div id="processingIndicator" class="text-center py-8 hide">
+                    <div class="processing-animation mx-auto mb-4"></div>
+                    <p class="text-blue-300">Processing your requirements...</p>
+                    <p class="text-sm text-gray-400 mt-2">This might take a moment</p>
+                </div>
+                
+                <div id="requirementsOutput" class="hide">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="bi bi-list-check mr-2 text-blue-400"></i>
+                        Extracted Requirements
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glassmorphism p-6">
+                            <h3 class="text-lg font-medium mb-4 flex items-center">
+                                <i class="bi bi-check2-square mr-2 text-blue-400"></i>
+                                Functional Requirements
+                            </h3>
+                            <div id="functionalReqs" class="space-y-3"></div>
+                        </div>
+                        <div class="glassmorphism p-6">
+                            <h3 class="text-lg font-medium mb-4 flex items-center">
+                                <i class="bi bi-sliders mr-2 text-blue-400"></i>
+                                Non-Functional Requirements
+                            </h3>
+                            <div id="nonFunctionalReqs" class="space-y-3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-medium mb-4 flex items-center">
+                            <i class="bi bi-kanban mr-2 text-blue-400"></i>
+                            MoSCoW Prioritization
+                        </h3>
+                        <div id="moscowGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
+                    </div>
+
+                    <div class="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button onclick="exportToWord()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg neon-glow transition-all flex items-center justify-center">
+                            <i class="bi bi-file-earmark-word mr-2"></i>
+                            Export to Word
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg neon-glow transition-all flex items-center justify-center">
+                            <i class="bi bi-file-earmark-excel mr-2"></i>
+                            Export to Excel
+                        </button>
+                        <button onclick="copyToClipboard()" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg neon-glow transition-all flex items-center justify-center">
+                            <i class="bi bi-clipboard mr-2"></i>
+                            Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Chatbot -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <button id="chatToggle" class="bg-blue-600 hover:bg-blue-700 p-4 rounded-full neon-glow transition-all">
+            <i class="bi bi-chat-dots-fill text-2xl"></i>
+        </button>
+        <div id="chatWindow" class="hide glassmorphism absolute bottom-16 right-0 w-72 md:w-80 h-96 p-4">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <i class="bi bi-robot text-blue-400 mr-2"></i>
+                    <h3 class="font-medium">AI Assistant</h3>
+                </div>
+                <button onclick="toggleChat()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div id="chatMessages" class="h-72 overflow-y-auto mb-4 pr-2">
+                <div class="mb-3">
+                    <div class="glassmorphism p-2 rounded-lg inline-block max-w-[80%]">
+                        <p class="text-sm">Hello! I can help you analyze your requirements or answer questions about them. What would you like to know?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex">
+                <input type="text" id="chatInput" class="w-full glassmorphism p-2 rounded-l-lg" placeholder="Ask about requirements...">
+                <button id="sendChat" class="bg-blue-600 hover:bg-blue-700 px-3 rounded-r-lg transition-colors">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('sidebar-open');
+        });
+
+        // File Upload Handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3b82f6';
+            uploadArea.classList.add('neon-glow');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            uploadArea.classList.remove('neon-glow');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            uploadArea.classList.remove('neon-glow');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            // Show file names
+            let fileNames = Array.from(files).map(file => file.name).join(', ');
+            const fileInfoElement = document.createElement('div');
+            fileInfoElement.className = 'mt-4 p-3 glassmorphism';
+            fileInfoElement.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="bi bi-file-earmark text-blue-400 mr-2"></i>
+                        <span class="truncate">${fileNames}</span>
+                    </div>
+                    <button class="text-gray-400 hover:text-white">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Remove previous file info if exists
+            const existingFileInfo = uploadArea.parentNode.querySelector('.glassmorphism:not(#uploadArea)');
+            if (existingFileInfo) {
+                existingFileInfo.remove();
+            }
+            
+            // Add file info after upload area
+            uploadArea.parentNode.insertBefore(fileInfoElement, uploadArea.nextSibling);
+            
+            // Attach remove button functionality
+            fileInfoElement.querySelector('button').addEventListener('click', () => {
+                fileInfoElement.remove();
+                fileInput.value = '';
+            });
+            
+            console.log('Files received:', files);
+        }
+
+        // Process Requirements
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const resultsSection = document.getElementById('resultsSection');
+            const processingIndicator = document.getElementById('processingIndicator');
+            const requirementsOutput = document.getElementById('requirementsOutput');
+
+            resultsSection.classList.remove('hide');
+            processingIndicator.classList.remove('hide');
+            requirementsOutput.classList.add('hide');
+            
+            // Scroll to results section
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+            // Simulate processing
+            setTimeout(() => {
+                processingIndicator.classList.add('hide');
+                requirementsOutput.classList.remove('hide');
+                displayDummyResults();
+            }, 3000);
+        });
+
+        function displayDummyResults() {
+            const functional = document.getElementById('functionalReqs');
+            const nonFunctional = document.getElementById('nonFunctionalReqs');
+            const moscow = document.getElementById('moscowGrid');
+
+            // Sample data
+            const dummyFunctional = [
+                'User authentication and role-based access control',
+                'Document upload and parsing capabilities',
+                'Requirements extraction and categorization',
+                'Search functionality for requirements',
+                'Version history and comparison'
+            ];
+            
+            const dummyNonFunctional = [
+                'System response time < 2 seconds',
+                '99.9% uptime and availability',
+                'Data encryption at rest and in transit',
+                'Support for concurrent users (up to 100)',
+                'GDPR compliance for user data'
+            ];
+            
+            const dummyMoscow = {
+                'Must Have': ['User authentication', 'Document parsing', 'Requirements extraction', 'Data export'],
+                'Should Have': ['Export capabilities', 'History tracking', 'Search functionality', 'Requirement relationships'],
+                'Could Have': ['Theme customization', 'Multiple language support', 'AI suggestions', 'Integration with JIRA'],
+                'Won't Have': ['Video processing', 'Social media integration', 'Mobile application', 'Blockchain verification']
+            };
+
+            functional.innerHTML = dummyFunctional.map((req, index) => 
+                `<div class="glassmorphism p-3 hover:neon-glow transition-all">
+                    <div class="flex items-start">
+                        <span class="text-blue-400 mr-2 mt-1">FR${index+1}:</span>
+                        <span>${req}</span>
+                    </div>
+                </div>`
+            ).join('');
+
+            nonFunctional.innerHTML = dummyNonFunctional.map((req, index) => 
+                `<div class="glassmorphism p-3 hover:neon-glow transition-all">
+                    <div class="flex items-start">
+                        <span class="text-blue-400 mr-2 mt-1">NFR${index+1}:</span>
+                        <span>${req}</span>
+                    </div>
+                </div>`
+            ).join('');
+
+            const priorityColors = {
+                'Must Have': 'from-red-500/20 to-red-500/10 border-red-500/30',
+                'Should Have': 'from-yellow-500/20 to-yellow-500/10 border-yellow-500/30',
+                'Could Have': 'from-green-500/20 to-green-500/10 border-green-500/30',
+                'Won't Have': 'from-gray-500/20 to-gray-500/10 border-gray-500/30',
+            };
+
+            moscow.innerHTML = Object.entries(dummyMoscow).map(([priority, items]) => `
+                <div class="glassmorphism p-4 border-2 bg-gradient-to-b ${priorityColors[priority]}">
+                    <h4 class="font-medium mb-3">${priority}</h4>
+                    ${items.map(item => `<div class="text-sm mb-2 glassmorphism p-2">${item}</div>`).join('')}
+                </div>
+            `).join('');
+        }
+
+        // Chat functionality
+        document.getElementById('chatToggle').addEventListener('click', toggleChat);
+        document.getElementById('sendChat').addEventListener('click', sendChatMessage);
+        
+        // Send message when Enter key is pressed
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            chatWindow.classList.toggle('hide');
+            if (!chatWindow.classList.contains('hide')) {
+                document.getElementById('chatInput').focus();
+            }
+        }
+
+        function sendChatMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const chatMessages = document.getElementById('chatMessages');
+            const message = chatInput.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message
+            chatMessages.innerHTML += `
+                <div class="mb-3 text-right">
+                    <div class="glassmorphism bg-blue-600/30 p-2 rounded-lg inline-block max-w-[80%]">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate AI response after a delay
+            setTimeout(() => {
+                const responses = [
+                    "I'd recommend organizing your non-functional requirements into categories like performance, security, and usability.",
+                    "Your requirement about user authentication seems ambiguous. Consider specifying authentication methods.",
+                    "Looking at your requirements, you might be missing some important data privacy compliance items.",
+                    "I've analyzed your requirements and noticed some potential conflicts between FR3 and NFR2.",
+                    "For a project of this scope, you should consider adding more detailed acceptance criteria to each requirement."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                
+                chatMessages.innerHTML += `
+                    <div class="mb-3">
+                        <div class="glassmorphism p-2 rounded-lg inline-block max-w-[80%]">
+                            <p class="text-sm">${randomResponse}</p>
+                        </div>
+                    </div>
+                `;
+                
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+        }
+
+        // Export functions
+        function exportToWord() {
+            // Simulate download
+            simulateDownload('requirements_export.docx');
+        }
+
+        function exportToExcel() {
+            // Simulate download
+            simulateDownload('requirements_export.xlsx');
+        }
+        
+        function copyToClipboard() {
+            const functional = document.getElementById('functionalReqs').innerText;
+            const nonFunctional = document.getElementById('nonFunctionalReqs').innerText;
+            
+            const textToCopy = `FUNCTIONAL REQUIREMENTS:\n${functional}\n\nNON-FUNCTIONAL REQUIREMENTS:\n${nonFunctional}`;
+            
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // Show success message
+                    const message = document.createElement('div');
+                    message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded glassmorphism';
+                    message.textContent = 'Copied to clipboard!';
+                    document.body.appendChild(message);
+                    
+                    // Remove after 3 seconds
+                    setTimeout(() => {
+                        message.remove();
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        }
+        
+        function simulateDownload(filename) {
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = '#';
+            link.download = filename;
+            
+            // Show success message
+            const message = document.createElement('div');
+            message.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded glassmorphism';
+            message.textContent = `Downloading ${filename}...`;
+            document.body.appendChild(message);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
